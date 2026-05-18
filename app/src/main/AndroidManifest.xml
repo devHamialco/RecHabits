@@ -64,5 +64,11 @@
                 android:resource="@xml/rechabits_widget_info" />
         </receiver>
 
+        <service
+            android:name=".data.reminder.OverlayService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
     </application>
 </manifest>

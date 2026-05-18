@@ -59,7 +59,10 @@ class ReminderRepository @Inject constructor(
     }
 
     private fun registerAlarm(schedule: ScheduleEntity) {
-        val intent = Intent(context, ReminderReceiver::class.java)
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra(ReminderReceiver.EXTRA_HABIT_ID, schedule.habitId)
+            putExtra(ReminderReceiver.EXTRA_SCHEDULE_ID, schedule.id)
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             schedule.id.toInt(),

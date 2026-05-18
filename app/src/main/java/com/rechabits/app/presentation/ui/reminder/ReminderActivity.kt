@@ -17,13 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rechabits.app.data.reminder.ReminderReceiver
@@ -53,7 +51,8 @@ class ReminderActivity : ComponentActivity() {
         }
 
         val habitId = intent.getLongExtra(ReminderReceiver.EXTRA_HABIT_ID, -1L)
-        val scheduleId = intent.getLongExtra(ReminderReceiver.EXTRA_SCHEDULE_ID, -1L)
+        val habitName = intent.getStringExtra(ReminderReceiver.EXTRA_HABIT_NAME) ?: ""
+        val iconId = intent.getStringExtra(ReminderReceiver.EXTRA_ICON_ID) ?: "water_drop"
 
         setContent {
             RechaBitsTheme {
@@ -64,19 +63,10 @@ class ReminderActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Habit icon placeholder
-                    Icon(
-                        painter = painterResource(android.R.drawable.ic_dialog_info),
-                        contentDescription = null,
-                        modifier = Modifier.size(96.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
+                    // Habit icon (discrete - only icon, no text)
                     Text(
-                        text = "\u23F0",
-                        fontSize = 48.sp
+                        text = getIconForHabit(iconId),
+                        fontSize = 96.sp
                     )
 
                     Spacer(modifier = Modifier.height(48.dp))
@@ -108,6 +98,21 @@ class ReminderActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun getIconForHabit(iconId: String): String {
+        return when (iconId) {
+            "water_drop" -> "\uD83D\uDCA7"
+            "run" -> "\uD83C\uDFC3\u200D\u2640\uFE0F"
+            "apple" -> "\uD83C\uDF4E"
+            "tooth" -> "\uD83E\uDBB7"
+            "moon" -> "\uD83C\uDF19"
+            "sun" -> "\u2600\uFE0F"
+            "cream" -> "\uD83E\uDDF4"
+            "shield" -> "\uD83D\uDEE1\uFE0F"
+            "plant" -> "\uD83C\uDF31"
+            else -> "\uD83D\uDCA7"
         }
     }
 }
