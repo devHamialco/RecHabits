@@ -1,6 +1,8 @@
 package com.rechabits.app.data.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.rechabits.app.data.db.dao.CompletionDao
 import com.rechabits.app.data.db.dao.HabitDao
@@ -18,4 +20,21 @@ abstract class RechaBitsDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
     abstract fun completionDao(): CompletionDao
     abstract fun scheduleDao(): ScheduleDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: RechaBitsDatabase? = null
+
+        fun getDatabase(context: Context): RechaBitsDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    RechaBitsDatabase::class.java,
+                    "rechabits_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }
