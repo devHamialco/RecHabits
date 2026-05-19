@@ -11,11 +11,12 @@ import com.rechabits.app.data.reminder.ReminderReceiver
 import com.rechabits.app.domain.model.Schedule
 import java.util.Calendar
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 class ReminderRepository @Inject constructor(
     private val scheduleDao: ScheduleDao,
     private val alarmManager: AlarmManager,
-    private val context: Context
+    @ApplicationContext private val context: Context // Add this annotation
 ) {
     suspend fun getAllEnabledSchedules(): List<Schedule> {
         return scheduleDao.getAllEnabled().map { it.toDomain() }

@@ -68,7 +68,11 @@
             android:name=".data.reminder.OverlayService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE"
+                android:value="This service shows a floating reminder overlay when a habit schedule is triggered, allowing users to quickly mark habits as done." />
+        </service>
 
     </application>
 </manifest>

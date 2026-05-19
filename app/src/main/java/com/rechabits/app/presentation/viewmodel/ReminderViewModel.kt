@@ -1,5 +1,4 @@
-package com.rechabits.app.presentation.ui.reminder
-
+package com.rechabits.app.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rechabits.app.data.repository.HabitRepository
