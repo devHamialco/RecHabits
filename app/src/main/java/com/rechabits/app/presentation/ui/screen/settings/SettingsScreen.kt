@@ -1,8 +1,6 @@
 package com.rechabits.app.presentation.ui.screen.settings
 
 import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,22 +10,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rechabits.app.data.reminder.PermissionHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +41,17 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-
+    
+    var hasOverlayPermission by remember { mutableStateOf(false) }
+    var hasExactAlarmPermission by remember { mutableStateOf(false) }
+    var hasNotificationPermission by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        hasOverlayPermission = PermissionHelper.hasOverlayPermission(context)
+        hasExactAlarmPermission = PermissionHelper.hasExactAlarmPermission(context)
+        hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,99 +71,45 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             Text(
-                "Recordatorios",
+                "Permisos de recordatorios",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             // Overlay permission
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Ventana flotante", fontWeight = FontWeight.Medium)
-                    Text(
-                        "Permite mostrar alertas sobre otras apps",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            PermissionRow(
+                title = "Ventana flotante",
+                description = "Permite mostrar alertas sobre otras apps",
+                hasPermission = hasOverlayPermission,
+                onConfigure = {
+                    context.startActivity(PermissionHelper.getOverlayPermissionIntent(context))
                 }
-                Button(
-                    onClick = {
-                        val intent = Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:${context.packageName}")
-                        )
-                        context.startActivity(intent)
-                    }
-                ) {
-                    Text("Configurar")
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Exact alarm permission
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Alarmas exactas", fontWeight = FontWeight.Medium)
-                    Text(
-                        "Necesario para recordatorios a la hora exacta",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            PermissionRow(
+                title = "Alarmas exactas",
+                description = "Necesario para recordatorios a la hora exacta",
+                hasPermission = hasExactAlarmPermission,
+                onConfigure = {
+                    context.startActivity(PermissionHelper.getExactAlarmPermissionIntent(context))
                 }
-                Button(
-                    onClick = {
-                        val intent = Intent(
-                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-                            Uri.parse("package:${context.packageName}")
-                        )
-                        context.startActivity(intent)
-                    }
-                ) {
-                    Text("Configurar")
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Notification permission (Android 13+)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Notificaciones", fontWeight = FontWeight.Medium)
-                    Text(
-                        "Permite enviar notificaciones de recordatorio",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            // Notification permission
+            PermissionRow(
+                title = "Notificaciones",
+                description = "Permite enviar notificaciones de recordatorio",
+                hasPermission = hasNotificationPermission,
+                onConfigure = {
+                    context.startActivity(PermissionHelper.getNotificationPermissionIntent(context))
                 }
-                Button(
-                    onClick = {
-                        val intent = Intent(
-                            Settings.ACTION_APP_NOTIFICATION_SETTINGS,
-                            Uri.parse("package:${context.packageName}")
-                        )
-                        context.startActivity(intent)
-                    }
-                ) {
-                    Text("Configurar")
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -168,6 +130,41 @@ fun SettingsScreen(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+fun PermissionRow(
+    title: String,
+    description: String,
+    hasPermission: Boolean,
+    onConfigure: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (hasPermission) Icons.Default.CheckCircle else Icons.Default.Warning,
+            contentDescription = null,
+            tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFFF9800),
+            modifier = Modifier.padding(end = 12.dp)
+        )
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Medium)
+            Text(
+                description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Button(onClick = onConfigure) {
+            Text(if (hasPermission) "Verificar" else "Activar")
         }
     }
 }

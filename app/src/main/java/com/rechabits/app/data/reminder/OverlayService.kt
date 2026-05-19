@@ -1,8 +1,6 @@
 package com.rechabits.app.data.reminder
 
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -10,14 +8,12 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
-import com.rechabits.app.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,7 +30,6 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
     }
 
@@ -145,22 +140,8 @@ class OverlayService : Service() {
         overlayView = null
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "RechaBits Reminders",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Notification for overlay service"
-            }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-    }
-
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, OVERLAY_CHANNEL_ID)
             .setContentTitle("RechaBits")
             .setContentText("Recordatorio activo")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -184,7 +165,7 @@ class OverlayService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "rechabits_overlay_channel"
+        private const val OVERLAY_CHANNEL_ID = "rechabits_overlay_channel"
         private const val NOTIFICATION_ID = 1
 
         const val EXTRA_HABIT_ID = "extra_habit_id"

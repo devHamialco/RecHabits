@@ -3,6 +3,7 @@ package com.rechabits.app.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rechabits.app.data.repository.HabitRepository
+import com.rechabits.app.data.repository.ReminderRepository
 import com.rechabits.app.domain.model.Habit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +21,8 @@ data class HabitUiState(
 
 @HiltViewModel
 class HabitListViewModel @Inject constructor(
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val reminderRepository: ReminderRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<HabitUiState> = habitRepository.getAllActive()
@@ -35,6 +37,13 @@ class HabitListViewModel @Inject constructor(
 
     fun deleteHabit(habit: Habit) {
         viewModelScope.launch {
+            // Cancel alarms for this habit's schedules
+            val schedules = reminderRepository.getSchedulesForHabit(habit.id)
+            schedules.forEach { schedule ->
+                reminderRepository.cancelAlarmForSchedule(schedule.id)
+            }
+            
+            // Delete habit and associated data
             habitRepository.delete(habit)
         }
     }

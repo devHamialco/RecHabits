@@ -1,15 +1,11 @@
 package com.rechabits.app.data.reminder
 
 import android.app.KeyguardManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.provider.Settings
-import androidx.core.app.NotificationCompat
 import com.rechabits.app.data.db.RechaBitsDatabase
 import com.rechabits.app.data.repository.HabitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -48,11 +44,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 context.startActivity(reminderIntent)
             } else {
                 // Device is unlocked -> try overlay or fallback to notification
-                val hasOverlayPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    Settings.canDrawOverlays(context)
-                } else {
-                    true
-                }
+                val hasOverlayPermission = PermissionHelper.hasOverlayPermission(context)
 
                 if (hasOverlayPermission) {
                     val overlayIntent = Intent(context, OverlayService::class.java).apply {
@@ -74,21 +66,6 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun showNotification(context: Context, habitId: Long, habitName: String, iconId: String) {
-        val channelId = "rechabits_reminders"
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "RechaBits Reminders",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Habit reminders"
-                setShowBadge(true)
-            }
-            val manager = context.getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-
         val fullScreenIntent = Intent(context, ReminderActivity::class.java).apply {
             putExtra(EXTRA_HABIT_ID, habitId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -100,17 +77,16 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("RechaBits")
-            .setContentText("Es hora de tu hábito")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
+        val notification = NotificationHelper.createReminderNotification(
+            context = context,
+            habitId = habitId,
+            habitName = habitName,
+            iconId = iconId
+        )
             .setFullScreenIntent(fullScreenPendingIntent, true)
-            .setAutoCancel(true)
             .build()
 
-        val manager = context.getSystemService(NotificationManager::class.java)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
         manager.notify(habitId.toInt(), notification)
     }
 
